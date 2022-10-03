@@ -49,6 +49,7 @@ def convert_data_to_binary_string(U,m):
     return bit_data
 
 def empirical_distribution(binary_samples, N_qubits):
+
     ''' This method outputs the empirical probability distribution given samples in a list of binary strings
     as a dictionary, with keys as outcomes, and values as probabilities. It is used as the target distribution
     training the QCBM circuit '''

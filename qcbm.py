@@ -43,9 +43,9 @@ class QCBM:
         qc = QuantumCircuit(qr)
         qc.append(self.GHZstate(),qr[:])
         for l in range(self.NUM_LAYERS):
-            thetas = params[0,:,l] # For RZ, RZZ gates
+            thetas = params[0,:,l] # For RZ
             phis = params[1,:,l]   # For RX gates
-            rhos = params[2,:,l]
+            rhos = params[2,:,l] # For RZZ gates
             for k in range(0,self.NUM_VARS*self.NUM_QUBITS_VAR,self.NUM_QUBITS_VAR):
                 qc.append(self.parametrized_unitary(thetas[k:k+self.NUM_QUBITS_VAR],
                                                phis[k:k+self.NUM_QUBITS_VAR],
@@ -87,10 +87,29 @@ class QCBM:
         params = params.reshape(3,self.NUM_QUBITS_VAR*self.NUM_VARS,self.NUM_LAYERS)
         circuit = self.construct_copula_ansatz(params)
         simulator = Aer.get_backend('qasm_simulator')
-        result = execute(circuit.reverse_bits(), backend=simulator, shots=num_shots).result()
+        result = execute(circuit, backend=simulator, shots=num_shots).result()
         counts = result.get_counts()
         born_probs = self.get_born_probabilities(counts,num_shots)
         return born_probs
+
+    def sample(self,params,num_shots = 2048):
+
+        """ Returns a numpy array of shape (NUM_SHOTS,NUM_VARS). Generates
+        N_SHOTS pseudo-samples from the aproximated multivariate distribution"""
+        params = params.reshape(3,self.NUM_QUBITS_VAR*self.NUM_VARS,self.NUM_LAYERS)
+        circuit = self.construct_copula_ansatz(params)
+        simulator = Aer.get_backend('qasm_simulator')
+        measurements = execute(circuit.reverse_bits(), backend=simulator, shots=num_shots,memory=True).result()
+        # Convert to pseudo-sample space
+        U = []
+        for bin_str in measurements.get_memory():
+            pseudo_sample = []
+            for i in range(0,self.NUM_QUBITS_VAR*self.NUM_VARS,self.NUM_QUBITS_VAR):
+                pseudo_bin = bin_str[i:i+self.NUM_QUBITS_VAR]
+                padding = (1/2**(self.NUM_QUBITS_VAR))*np.random.random_sample()
+                pseudo_sample.append(int(pseudo_bin,2)*(1/2**(self.NUM_QUBITS_VAR))+padding)
+            U.append(pseudo_sample)
+        return np.asarray(U)
 
     def cost_function(self,params):
 
