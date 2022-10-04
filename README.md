@@ -1,5 +1,14 @@
 # Copula-based-QCBM-estimation
 
+
+To run the code, use this conda environment: 
+```
+conda env create -f env.yml
+```
+<br>
+You can also see the pip packages needed inside the file.<br>
+
+
 - **generate_data.py**: Contains some utility fucntions to generate simulation data. In particular, a gaussian copula function to establish certain correlations between the marginals of the distribution, a binary encoding fucntion to translate classical data to the qubit space and histogram fucntion from a sequence of binary samples.
 - **qcbm.py**: Class template for the QCBM generative model
 - **train_hybrid_QCBM_random_data.ipynb**: Jupyter notebook for training/optimizing a QCBM that estimates the copula model for a given simulated data.
