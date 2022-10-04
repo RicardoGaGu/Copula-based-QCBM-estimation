@@ -42,7 +42,6 @@ def convert_data_to_binary_string(U,m):
     # Discretizing the variables bounded between 0 and 1 into 2^m levels, and assign binary string for each bin
     bins = np.linspace(0, 1, num=2**m)
     inds = np.digitize(U, bins)
-    print(inds)
     bit_data = []
     for ind in inds:
         # Contenate all variables into single bit string
