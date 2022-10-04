@@ -105,7 +105,7 @@ class QCBM:
         for bin_str in measurements.get_memory():
             pseudo_sample = []
             for i in range(0,self.NUM_QUBITS_VAR*self.NUM_VARS,self.NUM_QUBITS_VAR):
-                pseudo_bin = bin_str[i:i+self.NUM_QUBITS_VAR]
+                pseudo_bin = bin_str[i:i+self.NUM_QUBITS_VAR][::-1]
                 padding = (1/2**(self.NUM_QUBITS_VAR))*np.random.random_sample()
                 pseudo_sample.append(int(pseudo_bin,2)*(1/2**(self.NUM_QUBITS_VAR))+padding)
             U.append(pseudo_sample)

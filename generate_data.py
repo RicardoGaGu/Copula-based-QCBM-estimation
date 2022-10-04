@@ -3,14 +3,16 @@ import numpy as np
 import seaborn as sns
 from collections import Counter
 
-def gaussian_copula(n, P):
+def gaussian_copula(mu_c,cov_c,N):
     '''
-    n: Number of samples
-    p: target correlation matrix
+    N: Number of samples
+    cov_c: target correlation matrix
+    mu_c: mean vector
+
     The marginals distributions are also gaussian.
     '''
+    """
     d = P.shape[1] # num variables
-
     # Independent Normal distributions
     Z = np.random.normal(loc=0, scale=1, size=d*n).reshape(n,d)
     # Cholesky Decomposition
@@ -21,12 +23,16 @@ def gaussian_copula(n, P):
     # Multivariate normal distribution with a certain covariance
     #z = np.random.multivariate_normal(mean=m.reshape(d,), cov=K, size=n)
     #Z_corr = np.transpose(z)
-    # Probability integral transform
-    U = sp.stats.norm.cdf(Z_corr)
-    # Inverse CDF
+
+    """
+    dist_c = sp.stats.multivariate_normal(mean=mu_c, cov=cov_c)
+    Z = dist_c.rvs(size=N)
+    # Probability integral transform,assumes gaussian marginals
+    U = sp.stats.norm.cdf(Z)
+    # Inverse CDF assumes gaussian marginals
     G = sp.stats.norm.ppf(U)
 
-    return cholesky,Z,U,G
+    return Z,U,G
 
 def convert_data_to_binary_string(U,m):
 
@@ -36,6 +42,7 @@ def convert_data_to_binary_string(U,m):
     # Discretizing the variables bounded between 0 and 1 into 2^m levels, and assign binary string for each bin
     bins = np.linspace(0, 1, num=2**m)
     inds = np.digitize(U, bins)
+    print(inds)
     bit_data = []
     for ind in inds:
         # Contenate all variables into single bit string
@@ -57,16 +64,22 @@ def empirical_distribution(binary_samples, N_qubits):
     counts = Counter(binary_samples)
     for element in counts:
         '''Convert occurences to relative frequencies of binary string'''
-        counts[element] = counts[element]/(len(binary_samples))
+        counts[element] = counts[element]/len(binary_samples)
     # Make sure all binary strings are represented over the space of probabilities
+    target_probs = []
     for index in range(0, 2**N_qubits):
         '''If a binary string has not been seen in samples, set its value to zero'''
-        if '{:0{size}b}'.format(index, size=N_qubits)  not in counts:
-            counts['{:0{size}b}'.format(index, size=N_qubits)] = 0
-
+        key = '{:0{size}b}'.format(index, size=N_qubits)
+        if key  not in counts:
+            counts[key] = 0
+            target_probs.append(0)
+        else:
+            target_probs.append(counts[key])
+    """
     sorted_binary_samples_dict = {}
     keylist = sorted(counts)
     for key in keylist:
         sorted_binary_samples_dict[key] = counts[key]
-
     return np.asarray(list(sorted_binary_samples_dict.values()))
+    """
+    return np.asarray(target_probs)
