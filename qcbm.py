@@ -42,6 +42,7 @@ class QCBM:
 
     def construct_copula_ansatz(self,params):
 
+        params = params.reshape(3,self.NUM_QUBITS_VAR*self.NUM_VARS,self.NUM_LAYERS)
         qr = QuantumRegister(self.NUM_QUBITS_VAR*self.NUM_VARS,'q')
         qc = QuantumCircuit(qr)
         qc.append(self.GHZstate(),qr[:])
@@ -76,12 +77,6 @@ class QCBM:
         #plot_histogram(counts)
         return np.asarray(born_probs)
 
-    def build_copula_circuit(self,params):
-
-        params = params.reshape(3,self.NUM_QUBITS_VAR*self.NUM_VARS,self.NUM_LAYERS)
-        copula_qcircuit = self.construct_copula_ansatz(params)
-        return copula_qcircuit
-
     def estimate_distribution(self,params, num_shots = 2048):
         """
          This function performs a simulation with T shots and Q qbits. It's the parametrizable
@@ -89,11 +84,10 @@ class QCBM:
         Args:
             params: Flattened 3D array of form (2,NUM_QUBITS*NUM_VARS,NUM_LAYERS)
                     needed for the circuit.
-            T: Integer number of shots that are going to take place in the simulation.
+            num_shots: Integer number of shots that are going to take place in the simulation.
         Returns:
             born_probs: The born probabilities of the quantum state.
         """
-        params = params.reshape(3,self.NUM_QUBITS_VAR*self.NUM_VARS,self.NUM_LAYERS)
         copula_qcircuit = self.construct_copula_ansatz(params)
         result = execute(copula_qcircuit, backend=self.qsimulator, shots=num_shots).result()
         counts = result.get_counts()
@@ -104,16 +98,15 @@ class QCBM:
 
         """ Returns a numpy array of shape (NUM_SHOTS,NUM_VARS). Generates
         N_SHOTS pseudo-samples from the aproximated multivariate distribution"""
-        params = params.reshape(3,self.NUM_QUBITS_VAR*self.NUM_VARS,self.NUM_LAYERS)
         copula_qcircuit = self.construct_copula_ansatz(params)
         self.copula_qcircuit =  copula_qcircuit
-        measurements = execute(copula_qcircuit.reverse_bits(), backend=self.qsimulator, shots=num_shots,memory=True).result()
+        measurements = execute(copula_qcircuit, backend=self.qsimulator, shots=num_shots,memory=True).result()
         # Convert to pseudo-sample space
         U = []
         for bin_str in measurements.get_memory():
             pseudo_sample = []
             for i in range(0,self.NUM_QUBITS_VAR*self.NUM_VARS,self.NUM_QUBITS_VAR):
-                pseudo_bin = bin_str[i:i+self.NUM_QUBITS_VAR][::-1]
+                pseudo_bin = bin_str[i:i+self.NUM_QUBITS_VAR]
                 padding = (1/2**(self.NUM_QUBITS_VAR+1))*np.random.random_sample()
                 pseudo_sample.append(int(pseudo_bin,2)*(1/2**(self.NUM_QUBITS_VAR))+padding)
             U.append(pseudo_sample)
